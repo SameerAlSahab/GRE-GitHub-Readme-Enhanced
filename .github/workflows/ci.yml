@@ -1,0 +1,25 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile scripts
+        run: python -m py_compile scripts/*.py
+      - name: Every script answers --help
+        run: for s in scripts/*.py; do python -I "$s" --help > /dev/null; done
+      - name: Evals file is valid JSON
+        run: python -c "import json; json.load(open('evals/evals.json'))"
+      - name: Lint the examples and the README
+        run: |
+          for f in assets/examples/*.md README.md; do
+            python scripts/lint_readme.py "$f" --strict
+          done
